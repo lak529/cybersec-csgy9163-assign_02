@@ -1,13 +1,11 @@
+from flask import render_template
 from app import app
 
 @app.route('/')
 @app.route('/index')
 def index():
     user = {'username': 'Luna'}
-    return '''
-<html>
-<head><title>Flask Playground</title></head>
-<body>
-    <h1>Welcome, ''' + user['username'] + '''</h1>
-</body></html>
-'''
+    list = [{'p1':{'user': 'a'}, 'p2': 'Some msg'},
+            {'p1':{'user': 'b'}, 'p2': 'Another msg'}
+    ]
+    return render_template('index.html', title='Home', user=user, list=list)

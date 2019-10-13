@@ -1,0 +1,11 @@
+<html>
+<head>
+{% if title %}<title>{{ title }} - Flask Playground</title>
+{% else %}<title>Flask Playground</title>
+{% endif %}
+</head>
+<body>
+    <div>Header: <a href="/index">Home</a></dic>
+    <hr>
+    {% block content %}{% endblock %}
+</body></html>
