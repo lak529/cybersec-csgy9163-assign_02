@@ -21,19 +21,17 @@ def login():
     if(current_user.is_authenticated):
         return redirect(url_for('index'))
     form = LoginForm()
-    if(form.validate_on_submit()):
-        #grab the user field, and perform a query by it, and grab the first result
-        user = User.query.filter_by(username=form.username.data).first()
-        #if we get no user (username mismatch) or password is wrong, say invalid
-        if(user is None or not user.checkpw(form.password.data)):
-            flash('Invalid username or password')
-            return redirect(url_for('login'))
-        login_user(user)
-        #reroute to origin
-        next_page = request.args.get('next')
-        if(not next_page or url_parse(next_page).netloc != ''):
-            next_page = url_for('index')
-        return redirect(next_page)
+    if(form.is_submitted()):
+        if(form.validate()):
+            #grab the user field, and perform a query by it, and grab the first result
+            user = User.query.filter_by(username=form.username.data).first()
+            #if we get no user (username mismatch) or password is wrong, say invalid
+            if(user == None or not user.checkpw(form.password.data)):
+                return render_template('login_results.html', title='Login Failed', form=form, results="Login failure: Incorrect username or password")
+            if(not user.checkmfaid(form.mfacode.data)):
+                return render_template('login_results.html', title='Login Failed', form=form, results="Login failure: Two-factor auth failure")
+            login_user(user)
+            return render_template('login_results.html', title='Login Success', form=form, results="Login success")
     return render_template('login.html', title='Sign In', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -41,13 +39,22 @@ def register():
     if(current_user.is_authenticated):
         return redirect(url_for('index'))
     form = RegistrationForm()
-    if(form.validate_on_submit()):
-        user = User(username=form.username.data, mfaid=form.mfaid.data)
-        user.setpw(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        flash('Registration successful')
-        return redirect(url_for('login'))
+    if(form.is_submitted()):
+        if(form.validate()):
+            #test user existance
+            uname = form.username.data
+            pword = form.password.data
+            mfaid = form.mfaid.data
+            user = User.query.filter_by(username=uname).first()
+            if(user != None):
+                return render_template('register_results.html', title='Register Failed', form=form, results="Registration failure: username in use")
+            user = User(username=uname, mfaid=mfaid)
+            user.setpw(pword)
+            db.session.add(user)
+            db.session.commit()
+            return render_template('register_results.html', title='Register Successful', form=form, results="Registration success")
+        else:
+            return render_template('register_results.html', title='Register Failed', form=form, results="Registration failure: invalid fields")
     return render_template('register.html', title='Register', form=form)
 
 @app.route('/logout')

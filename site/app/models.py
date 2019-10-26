@@ -16,6 +16,10 @@ class User(UserMixin, db.Model):
     def checkpw(self, pw):
         return check_password_hash(self.password_hash, pw)
     
+    def checkmfaid(self, mid):
+        print(self.mfaid+":"+mid)
+        return (self.mfaid==mid)
+    
     # self.ToString()
     def __repr__(self):
         return '<User {}>'.format(self.username)
