@@ -19,13 +19,6 @@
             {% endfor %}
         </p>
         <p>
-            {{ form.password2.label }}<br>
-            {{ form.password2(size=32) }}
-            {% for error in form.password2.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
             {{ form.mfaid.label }}<br>
             {{ form.mfaid(size=32) }}
             {% for error in form.mfaid.errors %}
