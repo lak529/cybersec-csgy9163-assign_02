@@ -1,11 +1,11 @@
 <html>
 <head>
-{% if title %}<title>{{ title }} - Flask Playground</title>
-{% else %}<title>Flask Playground</title>
+{% if title %}<title>CSGY 9132 - Assign 2: {{ title }}</title>
+{% else %}<title>CSGY 9132 - Assign 2</title>
 {% endif %}
 </head>
 <body>
-    <div>Header:
+    <div>Spell Check:
         <a href="{{ url_for('index') }}">Home</a>
         {% if current_user.is_anonymous %}
         <a href="{{ url_for('login') }}">Login</a>

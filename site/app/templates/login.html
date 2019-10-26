@@ -18,7 +18,13 @@
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
         </p>
-        <p>{{ form.remember_me() }} {{ form.remember_me.label }}</p>
+        <p>
+            {{ form.mfacode.label }}<br>
+            {{ form.mfacode(size=32) }}
+            {% for error in form.mfacode.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
         <p>{{ form.submit() }}</p>
     </form>
     <p>New Users: <a href="{{ url_for('register') }}">Register</a></p>

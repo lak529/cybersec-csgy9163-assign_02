@@ -2,8 +2,9 @@ from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_user, login_required, logout_user
 from werkzeug.urls import url_parse
 from app import app, models, db
-from app.forms import LoginForm, RegistrationForm
+from app.forms import LoginForm, RegistrationForm, SpellCheckForm
 from app.models import User
+from app.utils import perform_spellcheck
 
 
 
@@ -13,7 +14,7 @@ debug = True
 @app.route('/index')
 @login_required #force a login to view this page
 def index():
-    return render_template('index.html', title='Home')
+    return redirect(url_for('spell_check'))
 
 @app.route('/login', methods=['GET','POST'])
 def login():
@@ -27,7 +28,7 @@ def login():
         if(user is None or not user.checkpw(form.password.data)):
             flash('Invalid username or password')
             return redirect(url_for('login'))
-        login_user(user, remember=form.remember_me.data)
+        login_user(user)
         #reroute to origin
         next_page = request.args.get('next')
         if(not next_page or url_parse(next_page).netloc != ''):
@@ -41,7 +42,7 @@ def register():
         return redirect(url_for('index'))
     form = RegistrationForm()
     if(form.validate_on_submit()):
-        user = User(username=form.username.data, email=form.email.data)
+        user = User(username=form.username.data, mfaid=form.mfaid.data)
         user.setpw(form.password.data)
         db.session.add(user)
         db.session.commit()
@@ -50,7 +51,20 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 @app.route('/logout')
+@login_required #force a login to view this page
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
+
+@app.route('/spell_check', methods=['GET', 'POST'])
+@login_required #force a login to view this page
+def spell_check():
+    form = SpellCheckForm()
+    if(form.validate_on_submit()):
+        textout = form.textin.data
+        misspelled = []
+        perform_spellcheck(form.textin.data, misspelled)
+        return render_template('spellcheckout.html', title='Spell Check Results', form=form, textout=textout, misspelled=misspelled)
+    return render_template('spellcheckin.html', title='Enter Text to Spell Check', form=form)
+    
