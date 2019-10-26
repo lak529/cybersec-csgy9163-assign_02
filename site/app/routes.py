@@ -23,12 +23,16 @@ def login():
     form = LoginForm()
     if(form.is_submitted()):
         if(form.validate()):
+            uname = form.username.data
+            pword = form.password.data
+            mfaid = form.mfacode.data
+            print(uname+":"+pword+":"+mfaid)
             #grab the user field, and perform a query by it, and grab the first result
-            user = User.query.filter_by(username=form.username.data).first()
+            user = User.query.filter_by(username=uname).first()
             #if we get no user (username mismatch) or password is wrong, say invalid
-            if(user == None or not user.checkpw(form.password.data)):
+            if(user == None or not user.checkpw(pword)):
                 return render_template('login_results.html', title='Login Failed', form=form, results="Login failure: Incorrect username or password")
-            if(not user.checkmfaid(form.mfacode.data)):
+            if(not user.checkmfaid(mfaid)):
                 return render_template('login_results.html', title='Login Failed', form=form, results="Login failure: Two-factor auth failure")
             login_user(user)
             return render_template('login_results.html', title='Login Success', form=form, results="Login success")
@@ -45,6 +49,7 @@ def register():
             uname = form.username.data
             pword = form.password.data
             mfaid = form.mfaid.data
+            print(uname+":"+pword+":"+mfaid)
             user = User.query.filter_by(username=uname).first()
             if(user != None):
                 return render_template('register_results.html', title='Register Failed', form=form, results="Registration failure: username in use")
