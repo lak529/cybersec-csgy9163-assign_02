@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, ValidationError, EqualTo
+from wtforms.validators import DataRequired, ValidationError, EqualTo, Length
 from app.models import User
+from app.utils import check_password_complex
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()], id='uname')
@@ -11,7 +12,7 @@ class LoginForm(FlaskForm):
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()], id='uname')
-    password = PasswordField('Password', validators=[DataRequired()], id='pword')
+    password = PasswordField('Password', validators=[DataRequired(),Length(min=8)], id='pword')
     #password2 = PasswordField('Repeat Password', validators=[DataRequired(), EqualTo('password')])
     mfaid = StringField('2FA ID', validators=[DataRequired()], id='2fa')
     submit = SubmitField('Register')
@@ -22,6 +23,12 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(username=username.data).first()
         if(user is not None):
             raise ValidationError('Please use a different username')
+    
+    def validate_password(self, password):
+        #check the password contains all required complexity
+        if(not check_password_complex(password.data)):
+            raise ValidationError('Password doens\'t meet complexity requirements (upper,lower,digit,special || unicode alpha,digit,special)')
+        
 
 class SpellCheckForm(FlaskForm):
     textin = TextAreaField('Text to Check', id='inputtext')

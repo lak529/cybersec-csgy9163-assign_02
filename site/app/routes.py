@@ -49,7 +49,8 @@ def register():
             uname = form.username.data
             pword = form.password.data
             mfaid = form.mfaid.data
-            print(uname+":"+pword+":"+mfaid)
+            #print(uname+":"+pword+":"+mfaid)
+            #note, this doesn't actually do anything, since the RegForm already has a validator on name
             user = User.query.filter_by(username=uname).first()
             if(user != None):
                 return render_template('register_results.html', title='Register Failed', form=form, results="Registration failure: username in use")

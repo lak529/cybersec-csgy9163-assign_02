@@ -80,5 +80,23 @@ def cleanup_tmpfile(filename):
         ret = 0
     return ret
 
+def check_password_complex(password):
+    isascii = lambda s: (len(s) == len(s.encode()))
+    s = password
+    #ascii only, Ul#@
+    if(isascii(s)):
+        if(any(x.isupper() for x in s) and
+           any(x.islower() for x in s) and 
+           any(x.isdigit() for x in s) and
+           any(x in s for x in r"~!@#$%^&*()_+-=<>?,./;:[]\{}|")):
+            return True
+    #unicode, skip the upper/lower requiremnt, but require alpha
+    else:
+        if(any(x.isalpha() for x in s) and 
+           any(x.isdigit() for x in s) and
+           any(x in s for x in r"~!@#$%^&*()_+-=<>?,./;:[]\{}|")):
+            return True
+    #doesn't meet requirements
+    return False
 
 
