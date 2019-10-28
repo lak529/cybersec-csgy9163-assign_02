@@ -31,7 +31,8 @@ for i in range(65536):
 
 def GET_parse(session, url, elem, attr):
     r = session.get(url)
-    page = BeautifulSoup(r.text, "html.parser")
+    resp = r.text
+    page = BeautifulSoup(resp, "html.parser")
     obj = page.find(id=elem)
     res = ""
     if(obj!=None):
@@ -41,7 +42,7 @@ def GET_parse(session, url, elem, attr):
             res = ""
             for s in obj.strings:
                 res += s
-    return res
+    return (res,resp)
 
 def POST_parse(session, url, payload, elem, attr):
     r = session.post(url, data=payload)
@@ -56,87 +57,72 @@ def POST_parse(session, url, payload, elem, attr):
             res = ""
             for s in obj.strings:
                 res += s
-    return (res,resp)
+    return (r,res,resp)
 
 def send_login(session, uname, pword, mfaid):
     url = baseurl+"/login"
-    
-    r = session.get(url)
-    page = BeautifulSoup(r.text, "html.parser")
-    csrf_token = page.input['value']
-    
-    csrf_token = GET_parse(session, url, "csrf_token", "value")
+    (csrf_token,resp) = GET_parse(session, url, "csrf_token", "value")
     
     payload = {'username': uname, 'password': pword, 'mfacode': mfaid, 'csrf_token': csrf_token, 'submit': "Sign+In"}
-    (res,resp) = POST_parse(session, url, payload, "result", None)
+    (r,res,resp) = POST_parse(session, url, payload, "result", None)
     if(debug):
         print(res)
-    return (r,res,csrf_token)
+    return (r,res,resp)
 
 def send_register(session, uname, pword, mfaid):
-    url = baseurl+"/register"
-    
-    r = session.get(url)
-    page = BeautifulSoup(r.text, "html.parser")
-    csrf_token = page.input['value']
-    
-    csrf_token = GET_parse(session, url, "csrf_token", "value")
+    url = baseurl+"/register"    
+    (csrf_token,resp) = GET_parse(session, url, "csrf_token", "value")
     
     payload = {'username': uname, 'password': pword, 'mfaid': mfaid, 'csrf_token': csrf_token, 'submit': "Register"}
-    (res,resp) = POST_parse(session, url, payload, "success", None)
+    (r,res,resp) = POST_parse(session, url, payload, "success", None)
     if(debug):
         print(res)
-    return (r,res)
+    return (r,res,resp)
 
 def send_spellcheck(session, text):
-    url = baseurl+"/spell_check"
-    
-    r = session.get(url)
-    page = BeautifulSoup(r.text, "html.parser")
-    csrf_token = page.input['value']
-    
-    csrf_token = GET_parse(session, url, "csrf_token", "value")
+    url = baseurl+"/spell_check"    
+    (csrf_token,resp) = GET_parse(session, url, "csrf_token", "value")
     
     #text=text.replace(' ', '+')
     payload = {'textin': text, 'csrf_token': csrf_token, 'submit': "Check+Text"}
-    (res,resp) = POST_parse(session, url, payload, "misspelled", None)
+    (r,res,resp) = POST_parse(session, url, payload, "misspelled", None)
     if(debug):
         print(res)
     #print(resp)
     return (r,res,resp)
 
-def test_GET_index(session):
-    url = baseurl+"/"
-    if(session != None):
-        resp = session.get(url)
-    else:
-        resp = requests.get(url)
-    print(resp.text)
-
 def test_LoginBadUser():
     session = requests.Session()
-    (r,res,xtok) = send_login(session, fake_user, fake_pass, fake_mfaid)
+    (r,res,resp) = send_login(session, fake_user, fake_pass, fake_mfaid)
     return ("Incorrect" in res)
     
 def test_LoginBadMFAid():
     session = requests.Session()
-    (r,res,xtok) = send_login(session, valid_user, valid_pass, fake_mfaid)
+    (r,res,resp) = send_login(session, valid_user, valid_pass, fake_mfaid)
     return (("Two-factor" in res) and ("failure" in res))
 
 def test_RegisterUser_Valid(uname,pword,mfaid):
     session = requests.Session()
-    (r,res) = send_register(session, uname, pword, mfaid)
+    (r,res,resp) = send_register(session, uname, pword, mfaid)
     return ("success" in res)
 
 def test_RegisterUser_BadPass():
     session = requests.Session()
-    (r,res) = send_register(session, fake_user, fake_pass, fake_mfaid)
+    (r,res,resp) = send_register(session, fake_user, fake_pass, fake_mfaid)
     return ("failure" in res)
 
 def test_LoginGoodUser(uname,pword,mfaid):
     session = requests.Session()
-    (r,res,xtok) = send_login(session, uname, pword, mfaid)
+    (r,res,resp) = send_login(session, uname, pword, mfaid)
     return ("success" in res)
+    
+def test_CSRF_Login():
+    session = requests.Session()
+    #no csrf token!
+    payload = {'username': valid_user, 'password': valid_pass, 'mfacode': valid_mfaid, 'submit': "Sign+In"}
+    (r,res,resp) = POST_parse(session, baseurl+"/login", payload, "result", None)
+    #we should be directed to login
+    return ("Sign In" in resp)
 
 
 def match_misspelled(check_msp, msp):
@@ -149,7 +135,7 @@ def match_misspelled(check_msp, msp):
     
 def test_MalignSpellCheck(test):
     session = requests.Session()
-    (r,res,xtok) = send_login(session, valid_user, valid_pass, valid_mfaid)
+    (r,res,resp) = send_login(session, valid_user, valid_pass, valid_mfaid)
     
     if(test==1):    #large
         msp = ["textt"]
@@ -176,7 +162,7 @@ def test_MalignSpellCheck(test):
 
 def test_SpellCheck(text,msp):
     session = requests.Session()
-    (r,res,xtok) = send_login(session, valid_user, valid_pass, valid_mfaid)
+    (r,res,resp) = send_login(session, valid_user, valid_pass, valid_mfaid)
     (r,res,resp) = send_spellcheck(session, text)
     return match_misspelled(msp,res)
 
@@ -190,7 +176,7 @@ def test_UC_SC():
     text = uc_str
     msp = []
     session = requests.Session()
-    (r,res,xtok) = send_login(session, uc_str, valid_pass, valid_mfaid)
+    (r,res,resp) = send_login(session, uc_str, valid_pass, valid_mfaid)
     (r,res,resp) = send_spellcheck(session, text)
     return match_misspelled(msp,res)
     
@@ -215,6 +201,11 @@ class TestNormalUsage(unittest.TestCase):
         init_tests()
         test_RegisterUser_Valid(valid_user,valid_pass,valid_mfaid)
         self.assertTrue(test_LoginGoodUser(valid_user,valid_pass,valid_mfaid))
+        
+    def test_CSRF(self):
+        init_tests()
+        test_RegisterUser_Valid(valid_user,valid_pass,valid_mfaid)
+        self.assertTrue(test_CSRF_Login())
         
     def test_LoginBad(self):
         init_tests()
@@ -241,7 +232,7 @@ class TestNormalUsage(unittest.TestCase):
         text = uc_str
         msp = []
         session = requests.Session()
-        (r,res,xtok) = send_login(session, uc_str, valid_pass, valid_mfaid)
+        (r,res,resp) = send_login(session, uc_str, valid_pass, valid_mfaid)
         (r,res,resp) = send_spellcheck(session, text)
         self.assertTrue(match_misspelled(msp,res))
     
