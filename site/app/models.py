@@ -22,7 +22,7 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, self.password_salt+pw)
     
     def checkmfaid(self, mid):
-        print(self.mfaid+":"+mid)
+        #print(self.mfaid+":"+mid)
         return (self.mfaid==mid)
     
     # self.ToString()

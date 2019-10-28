@@ -1,6 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_user, login_required, logout_user
 from werkzeug.urls import url_parse
+#from flask_sqlalchemy import SQLAlchemy
 from app import app, models, db
 from app.forms import LoginForm, RegistrationForm, SpellCheckForm
 from app.models import User
@@ -26,7 +27,7 @@ def login():
             uname = form.username.data
             pword = form.password.data
             mfaid = form.mfacode.data
-            print(uname+":"+pword+":"+mfaid)
+            #print(uname+":"+pword+":"+mfaid)
             #grab the user field, and perform a query by it, and grab the first result
             user = User.query.filter_by(username=uname).first()
             #if we get no user (username mismatch) or password is wrong, say invalid
@@ -80,4 +81,13 @@ def spell_check():
         perform_spellcheck(form.textin.data, misspelled)
         return render_template('spellcheckout.html', title='Spell Check Results', form=form, textout=textout, misspelled=misspelled)
     return render_template('spellcheckin.html', title='Enter Text to Spell Check', form=form)
-    
+
+if(debug):
+    @app.route('/api/tests/resetall', methods=['POST'])
+    def resetall():
+        mkey = request.form.get('mkey')
+        if(mkey == 'eightfoldwitch'):
+            print("Clearing and reinit'ing db")
+            User.query.delete()
+            db.session.commit()
+        return ""

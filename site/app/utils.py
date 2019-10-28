@@ -69,7 +69,7 @@ def exec_check(filename):
     except Exception as ex:
         ret = -1
         outstr = "Failed to perform spellcheck: " + str(ex)
-        print(outstr)
+        #print(outstr)
     return (ret,outstr)
 
 def cleanup_tmpfile(filename):
